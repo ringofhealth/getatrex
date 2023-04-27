@@ -2,8 +2,9 @@ defmodule Getatrex.Translator.Google do
   @moduledoc """
   Implementation of gcloudex google translator
   """
+  use Tesla
   alias Goth.Token
-  @endpoint  "https://translation.googleapis.com/language/translate/v2"
+  @endpoint "https://translation.googleapis.com/language/translate/v2"
 
   def translate_to_locale("", _), do: {:ok, ""}
 
@@ -12,9 +13,9 @@ defmodule Getatrex.Translator.Google do
     {:ok, token} = Token.for_scope("https://www.googleapis.com/auth/cloud-platform")
     headers = [{"Authorization", "Bearer #{token.token}"}]
 
-    case HTTPoison.post(@endpoint, body, headers) do
-      {:ok, %{body: body}} -> translated_text(Jason.decode!(body))
-      error -> {:error, "Error during request API #{inspect error}"}
+    case post(@endpoint, body, headers: headers) do
+      {:ok, %Tesla.Env{body: body}} -> translated_text(Jason.decode!(body))
+      {:error, reason} -> {:error, "Error during request API #{inspect(reason)}"}
     end
   end
 

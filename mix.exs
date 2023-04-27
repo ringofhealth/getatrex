@@ -8,8 +8,8 @@ defmodule Getatrex.Mixfile do
       app: :getatrex,
       version: @version,
       elixir: "~> 1.10",
-      build_embedded: Mix.env == :prod,
-      start_permanent: Mix.env == :prod,
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [ignore_warnings: "dialyzer.ignore-warnings"],
       test_coverage: [tool: ExCoveralls],
@@ -30,7 +30,12 @@ defmodule Getatrex.Mixfile do
   defp deps do
     [
       {:gettext, "~> 0.22"},
-      {:httpoison, "~> 1.8"},
+      {:tesla, "~> 1.4"},
+
+      # optional, but recommended adapter
+      {:hackney, "~> 1.17"},
+
+      # optional, required by JSON middleware
       {:jason, "~> 1.4"},
       {:goth, "~> 1.4"},
       {:remix, "~> 0.0.2", only: :dev, runtime: false},

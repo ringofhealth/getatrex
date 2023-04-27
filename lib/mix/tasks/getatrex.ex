@@ -27,20 +27,21 @@ defmodule Mix.Tasks.Getatrex do
   end
 
   def run_with_file(file_exists, to_lang) when file_exists == false or file_exists == nil do
-    Mix.shell.info "Warning!"
-    Mix.shell.info "Locale filename #{locale_path_default_po(to_lang)} does not exists."
-    Mix.shell.info "Please create '#{to_lang}' locale with gettext first:"
-    Mix.shell.info "Follow the instructions:"
-    Mix.shell.info ""
-    Mix.shell.info "$ mix gettext.extract"
-    Mix.shell.info "$ mix gettext.merge priv/gettext"
-    Mix.shell.info "$ mix gettext.merge priv/gettext --locale #{to_lang}"
-    Mix.shell.info ""
-    Mix.shell.info "More info here: https://github.com/elixir-lang/gettext#workflow"
+    Mix.shell().info("Warning!")
+    Mix.shell().info("Locale filename #{locale_path_default_po(to_lang)} does not exists.")
+    Mix.shell().info("Please create '#{to_lang}' locale with gettext first:")
+    Mix.shell().info("Follow the instructions:")
+    Mix.shell().info("")
+    Mix.shell().info("$ mix gettext.extract")
+    Mix.shell().info("$ mix gettext.merge priv/gettext")
+    Mix.shell().info("$ mix gettext.merge priv/gettext --locale #{to_lang}")
+    Mix.shell().info("")
+    Mix.shell().info("More info here: https://github.com/elixir-lang/gettext#workflow")
   end
 
   def run_with_file(true, to_lang) do
-    Mix.shell.info "Starting translation gettext locale #{to_lang}"
+    Mix.shell().info("Starting translation gettext locale #{to_lang}")
+
     to_lang
     |> translated_locale_path_default_po()
     |> Getatrex.Writer.start_link()
@@ -53,25 +54,32 @@ defmodule Mix.Tasks.Getatrex do
     |> Stream.map(&String.trim/1)
     |> Stream.with_index()
     |> Stream.map(fn {line, i} ->
-      IO.puts "#{i}: #{line}"
+      IO.puts("#{i}: #{line}")
       Getatrex.Collector.dispatch_line(line)
     end)
     |> Stream.run()
 
     Getatrex.Collector.dispatch_line("")
-    Mix.shell.info "Done!"
+    Mix.shell().info("Done!")
   end
 
   def run(_), do: run()
 
   def run do
-    Mix.shell.info "Call this task in the following way:"
-    Mix.shell.info ""
-    Mix.shell.info "\t$ mix getatrex es"
-    Mix.shell.info ""
-    Mix.shell.info "where `es` - target language (should be created by gettext before getatrex)"
-    Mix.shell.info ""
-    Mix.shell.info "Please read README.md https://github.com/alexfilatov/getatrex#getting-started"
+    Mix.shell().info("Call this task in the following way:")
+    Mix.shell().info("")
+    Mix.shell().info("\t$ mix getatrex es")
+    Mix.shell().info("")
+
+    Mix.shell().info(
+      "where `es` - target language (should be created by gettext before getatrex)"
+    )
+
+    Mix.shell().info("")
+
+    Mix.shell().info(
+      "Please read README.md https://github.com/alexfilatov/getatrex#getting-started"
+    )
   end
 
   @doc """
@@ -87,5 +95,4 @@ defmodule Mix.Tasks.Getatrex do
   def translated_locale_path_default_po(to_lang) do
     "./priv/gettext/#{to_lang}/LC_MESSAGES/translated_default.po"
   end
-
 end
