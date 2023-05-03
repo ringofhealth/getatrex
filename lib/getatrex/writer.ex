@@ -12,7 +12,11 @@ defmodule Getatrex.Writer do
   use GenServer
 
   def start_link(filename) do
-    GenServer.start_link(__MODULE__, %{filename: filename, file_pointer: File.open!(filename, [:write, :utf8])}, name: __MODULE__)
+    GenServer.start_link(
+      __MODULE__,
+      %{filename: filename, file_pointer: File.open!(filename, [:write, :utf8])},
+      name: __MODULE__
+    )
   end
 
   def init(state) do
@@ -31,20 +35,29 @@ defmodule Getatrex.Writer do
     :ok = GenServer.call(__MODULE__, {:write_line, line})
   end
 
-  def handle_call({:write_message, %{mentions: mentions, msgid: msgid, msgstr: msgstr}}, _from, state)
-  when mentions == [] or is_nil(mentions) do
-    message_string = [
-      ~s(msgid "#{msgid}"),
-      ~s(msgstr "#{msgstr}")
-    ]
-    |> Enum.join("\n")
+  def handle_call(
+        {:write_message, %{mentions: mentions, msgid: msgid, msgstr: msgstr}},
+        _from,
+        state
+      )
+      when mentions == [] or is_nil(mentions) do
+    message_string =
+      [
+        ~s(msgid "#{msgid}"),
+        ~s(msgstr "#{msgstr}")
+      ]
+      |> Enum.join("\n")
 
     IO.write(state[:file_pointer], message_string <> "\n\n")
 
     {:reply, :ok, state}
   end
 
-  def handle_call({:write_message, %{mentions: mentions, msgid: msgid, msgstr: msgstr}}, _from, state) do
+  def handle_call(
+        {:write_message, %{mentions: mentions, msgid: msgid, msgstr: msgstr}},
+        _from,
+        state
+      ) do
     message_list = [
       mentions_string(mentions),
       ~s(msgid "#{msgid}"),

@@ -74,10 +74,13 @@ defmodule Getatrex.Collector do
 
   def handle_call({:dispatch_line, ~s(msgstr "") <> _tail}, _from, %{msgid: msgid} = state) do
     translated_string =
-      case prepare_string(msgid) |> Getatrex.Translator.Google.translate_to_locale(state.to_lang) do
-        {:ok, translated_string} -> revert_string(translated_string)
+      case prepare_string(msgid)
+           |> Getatrex.Translator.Google.translate_to_locale(state.to_lang) do
+        {:ok, translated_string} ->
+          revert_string(translated_string)
+
         {:error, error} ->
-          Logger.error "Cannot translate [#{msgid}]. Reason: #{inspect error}"
+          Logger.error("Cannot translate [#{msgid}]. Reason: #{inspect(error)}")
           ""
       end
 
@@ -99,14 +102,17 @@ defmodule Getatrex.Collector do
     |> String.trim()
     # Doing a magic like this because Google Translate translates vars
     # and we don't want that:
-    |> (&(Regex.replace(~r/%{(.*?)}/, &1, fn _, x -> "BASE64ENCODE_VARIABLE[#{Base.encode64(x, padding: false)}]" end))).()
-    |> (&(Regex.replace(~r/"/, &1, fn(_, x) -> " GETATREX_DOUBLE_QUOTE " end))).()
+    |> (&Regex.replace(~r/%{(.*?)}/, &1, fn _, x ->
+          "BASE64ENCODE_VARIABLE[#{Base.encode64(x, padding: false)}]"
+        end)).()
+    |> (&Regex.replace(~r/"/, &1, fn _, x -> " GETATREX_DOUBLE_QUOTE " end)).()
   end
 
   defp revert_string(str) do
     str
-    |> (&(Regex.replace(~r/BASE64ENCODE_VARIABLE\s*\[([^\]]+)\]*/, &1, fn(_, x) -> "%{#{Base.decode64!(x, padding: false)}}" end))).()
-    |> (&(Regex.replace(~r/\sGETATREX_DOUBLE_QUOTE\s/, &1, fn(_, x) -> "\"" end))).()
+    |> (&Regex.replace(~r/BASE64ENCODE_VARIABLE\s*\[([^\]]+)\]*/, &1, fn _, x ->
+          "%{#{Base.decode64!(x, padding: false)}}"
+        end)).()
+    |> (&Regex.replace(~r/\sGETATREX_DOUBLE_QUOTE\s/, &1, fn _, x -> "\"" end)).()
   end
-
 end

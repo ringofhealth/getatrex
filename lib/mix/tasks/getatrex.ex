@@ -18,12 +18,19 @@ defmodule Mix.Tasks.Getatrex do
   7. All read/write are sync (to respect the order)
   8.
   """
-  def run([to_lang | _tail]) do
+  def run([to_lang | tail]) do
+    case tail do
+      [] ->
+        to_lang
+        |> locale_path_default_po()
+        |> File.exists?()
+        |> run_with_file(to_lang)
+
+      [file_loc | []] ->
+        run_with_custom_file(file_loc, to_lang)
+    end
+
     # checking whether local exists and run if file exists
-    to_lang
-    |> locale_path_default_po()
-    |> File.exists?()
-    |> run_with_file(to_lang)
   end
 
   def run_with_file(file_exists, to_lang) when file_exists == false or file_exists == nil do
@@ -50,6 +57,30 @@ defmodule Mix.Tasks.Getatrex do
 
     to_lang
     |> locale_path_default_po()
+    |> File.stream!()
+    |> Stream.map(&String.trim/1)
+    |> Stream.with_index()
+    |> Stream.map(fn {line, i} ->
+      IO.puts("#{i}: #{line}")
+      Getatrex.Collector.dispatch_line(line)
+    end)
+    |> Stream.run()
+
+    Getatrex.Collector.dispatch_line("")
+    Mix.shell().info("Done!")
+  end
+
+  def run_with_custom_file(file_loc, to_lang) do
+    Mix.shell().info("Starting translation gettext locale #{to_lang}")
+
+    write_new_file = custom_file_path(to_lang, file_loc)
+
+    write_new_file
+    |> Getatrex.Writer.start_link()
+
+    Getatrex.Collector.start_link(to_lang)
+
+    file_loc
     |> File.stream!()
     |> Stream.map(&String.trim/1)
     |> Stream.with_index()
@@ -94,5 +125,15 @@ defmodule Mix.Tasks.Getatrex do
   """
   def translated_locale_path_default_po(to_lang) do
     "./priv/gettext/#{to_lang}/LC_MESSAGES/translated_default.po"
+  end
+
+  def custom_file_path(to_lang, file) do
+    name =
+      String.split("priv/gettext/es/LC_MESSAGES/tags.po", "/")
+      |> List.last()
+      |> String.split(".")
+      |> List.first()
+
+    "./priv/gettext/#{to_lang}/LC_MESSAGES/translated_#{name}.po"
   end
 end
